@@ -35,13 +35,13 @@ func fetch(url string) (*html.Node, error) {
 func parseFollowing(doc *html.Node) []string {
 	urls := make([]string, 0)
 
-	findFollowingInfo(doc, urls)
+	urls = findFollowingInfo(doc, urls)
 
 	return urls
 }
 
 // 여기서, 무언가 특정 정보를 찾아서 처리하면, 크롤링을 하는 의미가 생긴다.
-func findFollowingInfo(node *html.Node, urls []string) {
+func findFollowingInfo(node *html.Node, urls []string) []string {
 	if node.Type == html.ElementNode && node.Data == "span" {
 		for _, attr := range node.Attr {
 			if attr.Key == "class" && attr.Val == "f4 Link--primary" {
@@ -52,8 +52,10 @@ func findFollowingInfo(node *html.Node, urls []string) {
 	}
 
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
-		findFollowingInfo(c, urls)
+		urls = findFollowingInfo(c, urls)
 	}
+
+	return urls
 }
 
 func getFollowingUrls(node *html.Node, urls []string) []string {
