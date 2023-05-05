@@ -35,38 +35,46 @@ func fetch(url string) (*html.Node, error) {
 func parseFollowing(doc *html.Node) []string {
 	urls := make([]string, 0)
 
-	var f func(*html.Node)
+	findFollowingInfo(doc, urls)
 
-	f = func(node *html.Node) {
-		if node.Type == html.ElementNode && node.Data == "span" {
-			for _, attr := range node.Attr {
-				if attr.Key == "class" && attr.Val == "f4 Link--primary" {
-					if node.FirstChild != nil && node.FirstChild.Type == html.TextNode {
-						fmt.Println(node.FirstChild.Data)
-					}
+	return urls
+}
 
-					if node.Parent != nil && node.Parent.Data == "a" {
-						for _, parentAttr := range node.Parent.Attr {
-							if parentAttr.Key == "href" {
-								user := parentAttr.Val
-								urls = append(urls, "https://github.com"+user+"?tab=following")
-								fmt.Println(urls)
-								break
-							}
-						}
-					}
-				}
+// 여기서, 무언가 특정 정보를 찾아서 처리하면, 크롤링을 하는 의미가 생긴다.
+func findFollowingInfo(node *html.Node, urls []string) {
+	if node.Type == html.ElementNode && node.Data == "span" {
+		for _, attr := range node.Attr {
+			if attr.Key == "class" && attr.Val == "f4 Link--primary" {
+				printTextNode(node)
+				urls = getFollowingUrls(node, urls)
 			}
-		}
-
-		for c := node.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
 		}
 	}
 
-	f(doc)
+	for c := node.FirstChild; c != nil; c = c.NextSibling {
+		findFollowingInfo(c, urls)
+	}
+}
+
+func getFollowingUrls(node *html.Node, urls []string) []string {
+	if node.Parent != nil && node.Parent.Data == "a" {
+		for _, attr := range node.Parent.Attr {
+			if attr.Key == "href" {
+				user := attr.Val
+				urls = append(urls, "https://github.com"+user+"?tab=following")
+				fmt.Println(urls)
+				break
+			}
+		}
+	}
 
 	return urls
+}
+
+func printTextNode(node *html.Node) {
+	if node.FirstChild != nil && node.FirstChild.Type == html.TextNode {
+		fmt.Println(node.FirstChild.Data)
+	}
 }
 
 func crawl(url string) {
